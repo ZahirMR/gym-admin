@@ -1,6 +1,6 @@
 {
   "files": {
-    "main.js": "/gym-admin/static/js/main.1b2d04f5.js",
+    "main.js": "/gym-admin/static/js/main.39684e47.js",
     "static/js/438.2f13ee8f.js": "/gym-admin/static/js/438.2f13ee8f.js",
     "static/media/Ionicons.ttf": "/gym-admin/static/media/Ionicons.3517aeaa34b2f8cd8eef.ttf",
     "static/media/icon.png": "/gym-admin/static/media/icon.5c9bb5441362c2bcbc37.png",
@@ -10,11 +10,11 @@
     "manifest.json": "/gym-admin/manifest.json",
     "favicon-16.png": "/gym-admin/favicon-16.png",
     "serve.json": "/gym-admin/serve.json",
-    "main.1b2d04f5.js.map": "/gym-admin/static/js/main.1b2d04f5.js.map",
+    "main.39684e47.js.map": "/gym-admin/static/js/main.39684e47.js.map",
     "438.2f13ee8f.js.map": "/gym-admin/static/js/438.2f13ee8f.js.map"
   },
   "entrypoints": [
     "static/js/438.2f13ee8f.js",
-    "static/js/main.1b2d04f5.js"
+    "static/js/main.39684e47.js"
   ]
 }
