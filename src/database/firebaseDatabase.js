@@ -351,11 +351,18 @@ export const getClientesVencidos = async () => {
       collection(db, 'clientes'),
       where('estado', '==', 'activo'),
       where('fecha_finalizacion', '<', hoy),
-      orderBy('fecha_finalizacion', 'asc')
+      orderBy('fecha_finalizacion', 'desc')
     );
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Cambiar estado de clientes vencidos a expirado automáticamente
+    for (const cliente of clientes) {
+      await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
+    }
+    
+    return clientes;
   } catch (error) {
     console.error('Error al obtener clientes vencidos:', error);
     return [];

@@ -17,8 +17,9 @@ import TrabajadoresScreen from '../screens/TrabajadoresScreen';
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const MainTabs = ({ route }) => {
+const MainTabs = ({ route, navigation }) => {
   const { user } = route.params || {};
+  const isAdmin = user?.rol === 'admin' || !user?.rol;
 
   return (
     <Tab.Navigator
@@ -65,17 +66,19 @@ const MainTabs = ({ route }) => {
           ),
         }}
       />
-      <Tab.Screen 
-        name="Reportes" 
-        component={ReportesScreen}
-        initialParams={{ user }}
-        options={{
-          tabBarLabel: 'Reportes',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="stats-chart" size={size} color={color} />
-          ),
-        }}
-      />
+      {isAdmin && (
+        <Tab.Screen 
+          name="Reportes" 
+          component={ReportesScreen}
+          initialParams={{ user }}
+          options={{
+            tabBarLabel: 'Reportes',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="stats-chart" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
       <Tab.Screen 
         name="Alertas" 
         component={AlertasScreen}
@@ -87,25 +90,48 @@ const MainTabs = ({ route }) => {
           ),
         }}
       />
+      {isAdmin && (
+        <Tab.Screen 
+          name="Gastos" 
+          component={GastosScreen}
+          initialParams={{ user }}
+          options={{
+            tabBarLabel: 'Gastos',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="cash" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
+      {isAdmin && (
+        <Tab.Screen 
+          name="Trabajadores" 
+          component={TrabajadoresScreen}
+          initialParams={{ user }}
+          options={{
+            tabBarLabel: 'Trabajadores',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="people" size={size} color={color} />
+            ),
+          }}
+        />
+      )}
       <Tab.Screen 
-        name="Gastos" 
-        component={GastosScreen}
-        initialParams={{ user }}
+        name="Logout"
+        component={() => null}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          },
+        })}
         options={{
-          tabBarLabel: 'Gastos',
+          tabBarLabel: 'Cerrar Sesión',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cash" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tab.Screen 
-        name="Trabajadores" 
-        component={TrabajadoresScreen}
-        initialParams={{ user }}
-        options={{
-          tabBarLabel: 'Trabajadores',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="people" size={size} color={color} />
+            <Ionicons name="log-out" size={size} color={color} />
           ),
         }}
       />
