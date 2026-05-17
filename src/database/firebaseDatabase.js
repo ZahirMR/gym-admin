@@ -391,25 +391,17 @@ export const getClientesVencidos = async () => {
 
     const q = query(
       collection(db, 'clientes'),
-      where('estado', '==', 'activo'),
       orderBy('fecha_finalizacion', 'desc')
     );
     
     const snapshot = await getDocs(q);
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Filtrar y cambiar estado de clientes vencidos a expirado automáticamente
+    // Filtrar clientes con estado expirado
     const clientesVencidos = [];
     for (const cliente of clientes) {
-      if (cliente.fecha_finalizacion) {
-        const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
-        const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
-        fechaFin.setHours(0, 0, 0, 0);
-        
-        if (fechaFin < hoy) {
-          await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
-          clientesVencidos.push(cliente);
-        }
+      if (cliente.estado === 'expirado') {
+        clientesVencidos.push(cliente);
       }
     }
     
