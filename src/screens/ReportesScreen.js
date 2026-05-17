@@ -40,13 +40,13 @@ const ReportesScreen = ({ route }) => {
         <Text style={styles.title}>Reportes e Ingresos</Text>
       </View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Total de Ingresos</Text>
-        <Text style={styles.summaryAmount}>{totalIngresos.toFixed(2)} Bs</Text>
-      </View>
-
       {isAdmin && (
         <>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>Total de Ingresos</Text>
+            <Text style={styles.summaryAmount}>{totalIngresos.toFixed(2)} Bs</Text>
+          </View>
+
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>10% para Socio</Text>
             <Text style={styles.summaryAmountWarning}>{porcentajeSocio.toFixed(2)} Bs</Text>
@@ -64,18 +64,27 @@ const ReportesScreen = ({ route }) => {
         </>
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ingresos por Mes</Text>
-        {ingresosPorMes.map((item, index) => (
-          <View key={index} style={styles.monthCard}>
-            <Text style={styles.monthLabel}>{item.mes}</Text>
-            <Text style={styles.monthAmount}>{item.total.toFixed(2)} Bs</Text>
-          </View>
-        ))}
-        {ingresosPorMes.length === 0 && (
-          <Text style={styles.emptyText}>No hay datos de ingresos</Text>
-        )}
-      </View>
+      {isAdmin && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ingresos por Mes</Text>
+          {ingresosPorMes.map((item, index) => (
+            <View key={index} style={styles.monthCard}>
+              <Text style={styles.monthLabel}>{item.mes}</Text>
+              <Text style={styles.monthAmount}>{item.total.toFixed(2)} Bs</Text>
+            </View>
+          ))}
+          {ingresosPorMes.length === 0 && (
+            <Text style={styles.emptyText}>No hay datos de ingresos por mes</Text>
+          )}
+        </View>
+      )}
+
+      {!isAdmin && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ventas de Productos</Text>
+          <Text style={styles.emptyText}>No tienes acceso a información de ingresos</Text>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Historial de Pagos</Text>

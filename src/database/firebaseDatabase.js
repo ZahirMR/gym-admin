@@ -197,9 +197,20 @@ export const insertCliente = async (cliente) => {
 
 export const getClientes = async () => {
   try {
+    const hoy = new Date().toISOString().split('T')[0];
     const q = query(collection(db, 'clientes'), orderBy('creado_en', 'desc'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Actualizar estado de clientes vencidos a expirado
+    for (const cliente of clientes) {
+      if (cliente.estado === 'activo' && cliente.fecha_finalizacion < hoy) {
+        await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
+        cliente.estado = 'expirado';
+      }
+    }
+    
+    return clientes;
   } catch (error) {
     console.error('Error al obtener clientes:', error);
     return [];
