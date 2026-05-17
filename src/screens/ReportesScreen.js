@@ -86,22 +86,24 @@ const ReportesScreen = ({ route }) => {
         </View>
       )}
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Historial de Pagos</Text>
-        {pagos.map((pago) => (
-          <View key={pago.id} style={styles.pagoCard}>
-            <View style={styles.pagoInfo}>
-              <Text style={styles.pagoCliente}>{pago.cliente_nombre}</Text>
-              <Text style={styles.pagoTipo}>{pago.tipo_pago}</Text>
-              <Text style={styles.pagoFecha}>{pago.fecha_pago}</Text>
+      {isAdmin && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Historial de Pagos</Text>
+          {pagos.map((pago) => (
+            <View key={pago.id} style={styles.pagoCard}>
+              <View style={styles.pagoInfo}>
+                <Text style={styles.pagoCliente}>{pago.cliente_nombre}</Text>
+                <Text style={styles.pagoTipo}>{pago.tipo_pago}</Text>
+                <Text style={styles.pagoFecha}>{pago.fecha_pago}</Text>
+              </View>
+              <Text style={styles.pagoMonto}>{pago.monto.toFixed(2)} Bs</Text>
             </View>
-            <Text style={styles.pagoMonto}>{pago.monto.toFixed(2)} Bs</Text>
-          </View>
-        ))}
-        {pagos.length === 0 && (
-          <Text style={styles.emptyText}>No hay pagos registrados</Text>
-        )}
-      </View>
+          ))}
+          {pagos.length === 0 && (
+            <Text style={styles.emptyText}>No hay pagos registrados</Text>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 };

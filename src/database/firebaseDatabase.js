@@ -197,16 +197,28 @@ export const insertCliente = async (cliente) => {
 
 export const getClientes = async () => {
   try {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().split('T')[0]; // YYYY-MM-DD
+    
     const q = query(collection(db, 'clientes'), orderBy('creado_en', 'desc'));
     const snapshot = await getDocs(q);
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
     // Actualizar estado de clientes vencidos a expirado
     for (const cliente of clientes) {
-      if (cliente.estado === 'activo' && cliente.fecha_finalizacion < hoy) {
-        await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
-        cliente.estado = 'expirado';
+      if (cliente.estado === 'activo' && cliente.fecha_finalizacion) {
+        // Convertir fecha de DD/MM/YY a YYYY-MM-DD para comparar
+        const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
+        const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        
+        // Ajustar fecha por zona horaria
+        fechaFin.setHours(fechaFin.getHours() + fechaFin.getTimezoneOffset() / 60);
+        const fechaFinStr = fechaFin.toISOString().split('T')[0];
+        
+        if (fechaFinStr < hoyStr) {
+          await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
+          cliente.estado = 'expirado';
+        }
       }
     }
     
@@ -333,7 +345,8 @@ export const getPagos = async () => {
 
 export const getClientesPorVencer = async () => {
   try {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().split('T')[0];
     const en5Dias = new Date();
     en5Dias.setDate(en5Dias.getDate() + 5);
     const fecha5Dias = en5Dias.toISOString().split('T')[0];
@@ -341,13 +354,30 @@ export const getClientesPorVencer = async () => {
     const q = query(
       collection(db, 'clientes'),
       where('estado', '==', 'activo'),
-      where('fecha_finalizacion', '>=', hoy),
-      where('fecha_finalizacion', '<=', fecha5Dias),
       orderBy('fecha_finalizacion', 'asc')
     );
     
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    
+    // Filtrar clientes que vencen en 5 días
+    const clientesPorVencer = [];
+    for (const cliente of clientes) {
+      if (cliente.fecha_finalizacion) {
+        const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
+        const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        
+        // Ajustar fecha por zona horaria
+        fechaFin.setHours(fechaFin.getHours() + fechaFin.getTimezoneOffset() / 60);
+        const fechaFinStr = fechaFin.toISOString().split('T')[0];
+        
+        if (fechaFinStr >= hoyStr && fechaFinStr <= fecha5Dias) {
+          clientesPorVencer.push(cliente);
+        }
+      }
+    }
+    
+    return clientesPorVencer;
   } catch (error) {
     console.error('Error al obtener clientes por vencer:', error);
     return [];
@@ -356,24 +386,38 @@ export const getClientesPorVencer = async () => {
 
 export const getClientesVencidos = async () => {
   try {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().split('T')[0]; // YYYY-MM-DD
 
     const q = query(
       collection(db, 'clientes'),
       where('estado', '==', 'activo'),
-      where('fecha_finalizacion', '<', hoy),
       orderBy('fecha_finalizacion', 'desc')
     );
     
     const snapshot = await getDocs(q);
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Cambiar estado de clientes vencidos a expirado automáticamente
+    // Filtrar y cambiar estado de clientes vencidos a expirado automáticamente
+    const clientesVencidos = [];
     for (const cliente of clientes) {
-      await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
+      if (cliente.fecha_finalizacion) {
+        // Convertir fecha de DD/MM/YY a YYYY-MM-DD para comparar
+        const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
+        const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        
+        // Ajustar fecha por zona horaria
+        fechaFin.setHours(fechaFin.getHours() + fechaFin.getTimezoneOffset() / 60);
+        const fechaFinStr = fechaFin.toISOString().split('T')[0];
+        
+        if (fechaFinStr < hoyStr) {
+          await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
+          clientesVencidos.push(cliente);
+        }
+      }
     }
     
-    return clientes;
+    return clientesVencidos;
   } catch (error) {
     console.error('Error al obtener clientes vencidos:', error);
     return [];
