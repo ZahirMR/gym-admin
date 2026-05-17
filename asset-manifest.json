@@ -1,20 +1,20 @@
 {
   "files": {
-    "main.js": "/static/js/main.4b97eb8a.js",
-    "static/js/438.bef837aa.js": "/static/js/438.bef837aa.js",
-    "static/media/Ionicons.ttf": "/static/media/Ionicons.3517aeaa34b2f8cd8eef.ttf",
-    "static/media/icon.png": "/static/media/icon.5c9bb5441362c2bcbc37.png",
-    "favicon.ico": "/favicon.ico",
-    "index.html": "/index.html",
-    "favicon-32.png": "/favicon-32.png",
-    "manifest.json": "/manifest.json",
-    "favicon-16.png": "/favicon-16.png",
-    "serve.json": "/serve.json",
-    "main.4b97eb8a.js.map": "/static/js/main.4b97eb8a.js.map",
-    "438.bef837aa.js.map": "/static/js/438.bef837aa.js.map"
+    "main.js": "/gym-admin/static/js/main.f5170249.js",
+    "static/js/438.d8bdc2af.js": "/gym-admin/static/js/438.d8bdc2af.js",
+    "static/media/Ionicons.ttf": "/gym-admin/static/media/Ionicons.3517aeaa34b2f8cd8eef.ttf",
+    "static/media/icon.png": "/gym-admin/static/media/icon.5c9bb5441362c2bcbc37.png",
+    "favicon.ico": "/gym-admin/favicon.ico",
+    "index.html": "/gym-admin/index.html",
+    "favicon-32.png": "/gym-admin/favicon-32.png",
+    "manifest.json": "/gym-admin/manifest.json",
+    "favicon-16.png": "/gym-admin/favicon-16.png",
+    "serve.json": "/gym-admin/serve.json",
+    "main.f5170249.js.map": "/gym-admin/static/js/main.f5170249.js.map",
+    "438.d8bdc2af.js.map": "/gym-admin/static/js/438.d8bdc2af.js.map"
   },
   "entrypoints": [
-    "static/js/438.bef837aa.js",
-    "static/js/main.4b97eb8a.js"
+    "static/js/438.d8bdc2af.js",
+    "static/js/main.f5170249.js"
   ]
 }
