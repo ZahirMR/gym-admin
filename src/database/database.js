@@ -24,5 +24,9 @@ export const updateGasto = (id, gasto) => firebaseDb.updateGasto(id, gasto);
 export const deleteGasto = (id) => firebaseDb.deleteGasto(id);
 export const getTotalGastos = () => firebaseDb.getTotalGastos();
 export const getGastosPorMes = () => firebaseDb.getGastosPorMes();
+export const insertTrabajador = (trabajador) => firebaseDb.insertTrabajador(trabajador);
+export const getTrabajadores = () => firebaseDb.getTrabajadores();
+export const updateTrabajador = (id, trabajador) => firebaseDb.updateTrabajador(id, trabajador);
+export const deleteTrabajador = (id) => firebaseDb.deleteTrabajador(id);
 
 export default null;

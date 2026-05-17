@@ -94,15 +94,16 @@ const AlertasScreen = () => {
 
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, styles.vencidoTitle]}>
-          Vencidos ({vencidos.length})
+          Expiradas ({vencidos.length})
         </Text>
         {vencidos.map((cliente) => (
           <View key={cliente.id} style={[styles.alertCard, styles.vencidoCard]}>
             <View style={styles.alertInfo}>
               <Text style={styles.clienteNombre}>{cliente.nombre}</Text>
               <Text style={styles.alertDetalle}>Celular: {cliente.celular}</Text>
-              <Text style={styles.alertDetalle}>Venció: {cliente.fecha_finalizacion}</Text>
+              <Text style={styles.alertDetalle}>Expiró: {cliente.fecha_finalizacion}</Text>
               <Text style={styles.alertDetalle}>Plan: {cliente.tipo_inscripcion}</Text>
+              <Text style={[styles.alertDetalle, styles.estadoExpirado]}>Estado: Expirada</Text>
             </View>
             <View style={styles.vencidoActions}>
               <TouchableOpacity
@@ -121,7 +122,7 @@ const AlertasScreen = () => {
           </View>
         ))}
         {vencidos.length === 0 && (
-          <Text style={styles.emptyText}>No hay clientes vencidos</Text>
+          <Text style={styles.emptyText}>No hay membresías expiradas</Text>
         )}
       </View>
     </ScrollView>
@@ -186,6 +187,10 @@ const styles = StyleSheet.create({
     color: '#888',
     fontSize: 14,
     marginBottom: 3,
+  },
+  estadoExpirado: {
+    color: '#ef4444',
+    fontWeight: 'bold',
   },
   renovarButton: {
     backgroundColor: '#4ade80',

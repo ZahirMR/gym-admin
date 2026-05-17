@@ -23,7 +23,9 @@ export const initDatabase = async () => {
       // Crear admin por defecto
       await setDoc(doc(db, 'admin', 'default'), {
         username: 'admin',
-        password: 'admin123'
+        password: 'admin123',
+        rol: 'admin',
+        creado_en: new Date().toISOString()
       });
     }
 
@@ -97,6 +99,7 @@ export const initDatabase = async () => {
 
 export const loginAdmin = async (username, password) => {
   try {
+    // Primero intentar con admin por defecto
     const adminDoc = await getDoc(doc(db, 'admin', 'default'));
     if (adminDoc.exists()) {
       const adminData = adminDoc.data();
@@ -104,10 +107,67 @@ export const loginAdmin = async (username, password) => {
         return { id: 'default', ...adminData };
       }
     }
+    
+    // Si no es admin por defecto, buscar en trabajadores
+    const q = query(collection(db, 'admin'), where('username', '==', username), where('password', '==', password));
+    const snapshot = await getDocs(q);
+    
+    if (!snapshot.empty) {
+      const doc = snapshot.docs[0];
+      return { id: doc.id, ...doc.data() };
+    }
+    
     return null;
   } catch (error) {
     console.error('Error en login:', error);
     return null;
+  }
+};
+
+// Funciones para trabajadores
+export const insertTrabajador = async (trabajador) => {
+  try {
+    const docRef = await addDoc(collection(db, 'admin'), {
+      ...trabajador,
+      rol: 'trabajador',
+      creado_en: new Date().toISOString()
+    });
+    return { insertId: docRef.id };
+  } catch (error) {
+    console.error('Error al insertar trabajador:', error);
+    return null;
+  }
+};
+
+export const getTrabajadores = async () => {
+  try {
+    const q = query(collection(db, 'admin'), where('rol', '==', 'trabajador'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener trabajadores:', error);
+    return [];
+  }
+};
+
+export const updateTrabajador = async (id, trabajador) => {
+  try {
+    const docRef = doc(db, 'admin', id);
+    await updateDoc(docRef, trabajador);
+    return true;
+  } catch (error) {
+    console.error('Error al actualizar trabajador:', error);
+    return false;
+  }
+};
+
+export const deleteTrabajador = async (id) => {
+  try {
+    await deleteDoc(doc(db, 'admin', id));
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar trabajador:', error);
+    return false;
   }
 };
 
@@ -263,15 +323,15 @@ export const getPagos = async () => {
 export const getClientesPorVencer = async () => {
   try {
     const hoy = new Date().toISOString().split('T')[0];
-    const en7Dias = new Date();
-    en7Dias.setDate(en7Dias.getDate() + 7);
-    const fecha7Dias = en7Dias.toISOString().split('T')[0];
+    const en5Dias = new Date();
+    en5Dias.setDate(en5Dias.getDate() + 5);
+    const fecha5Dias = en5Dias.toISOString().split('T')[0];
 
     const q = query(
       collection(db, 'clientes'),
       where('estado', '==', 'activo'),
       where('fecha_finalizacion', '>=', hoy),
-      where('fecha_finalizacion', '<=', fecha7Dias),
+      where('fecha_finalizacion', '<=', fecha5Dias),
       orderBy('fecha_finalizacion', 'asc')
     );
     

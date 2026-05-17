@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { getPagos, getTotalIngresos, getIngresosPorMes, getTotalGastos } from '../database/database';
 
-const ReportesScreen = () => {
+const ReportesScreen = ({ route }) => {
+  const { user } = route.params || {};
+  const isAdmin = user?.rol === 'admin' || !user?.rol;
+  
   const [pagos, setPagos] = useState([]);
   const [totalIngresos, setTotalIngresos] = useState(0);
   const [ingresosPorMes, setIngresosPorMes] = useState([]);
@@ -42,20 +45,24 @@ const ReportesScreen = () => {
         <Text style={styles.summaryAmount}>{totalIngresos.toFixed(2)} Bs</Text>
       </View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>10% para Socio</Text>
-        <Text style={styles.summaryAmountWarning}>{porcentajeSocio.toFixed(2)} Bs</Text>
-      </View>
+      {isAdmin && (
+        <>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>10% para Socio</Text>
+            <Text style={styles.summaryAmountWarning}>{porcentajeSocio.toFixed(2)} Bs</Text>
+          </View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Total de Gastos</Text>
-        <Text style={styles.summaryAmountDanger}>{totalGastos.toFixed(2)} Bs</Text>
-      </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>Total de Gastos</Text>
+            <Text style={styles.summaryAmountDanger}>{totalGastos.toFixed(2)} Bs</Text>
+          </View>
 
-      <View style={styles.summaryCard}>
-        <Text style={styles.summaryLabel}>Ganancia Neta</Text>
-        <Text style={styles.summaryAmountSuccess}>{gananciaNeta.toFixed(2)} Bs</Text>
-      </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>Ganancia Neta</Text>
+            <Text style={styles.summaryAmountSuccess}>{gananciaNeta.toFixed(2)} Bs</Text>
+          </View>
+        </>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Ingresos por Mes</Text>

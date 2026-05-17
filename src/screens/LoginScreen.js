@@ -14,7 +14,7 @@ const LoginScreen = ({ navigation }) => {
 
     const admin = await loginAdmin(username, password);
     if (admin) {
-      navigation.replace('MainTabs');
+      navigation.replace('MainTabs', { user: admin });
     } else {
       Alert.alert('Error', 'Usuario o contraseña incorrectos');
     }
@@ -46,10 +46,6 @@ const LoginScreen = ({ navigation }) => {
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Iniciar Sesión</Text>
       </TouchableOpacity>
-
-      <Text style={styles.info}>
-        Usuario por defecto: admin{'\n'}Contraseña: admin123
-      </Text>
     </View>
   );
 };

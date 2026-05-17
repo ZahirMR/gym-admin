@@ -12,11 +12,14 @@ import PromocionesScreen from '../screens/PromocionesScreen';
 import ReportesScreen from '../screens/ReportesScreen';
 import AlertasScreen from '../screens/AlertasScreen';
 import GastosScreen from '../screens/GastosScreen';
+import TrabajadoresScreen from '../screens/TrabajadoresScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
-const MainTabs = () => {
+const MainTabs = ({ route }) => {
+  const { user } = route.params || {};
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -26,18 +29,13 @@ const MainTabs = () => {
         },
         tabBarActiveTintColor: '#e94560',
         tabBarInactiveTintColor: '#888',
-        headerStyle: {
-          backgroundColor: '#1a1a2e',
-        },
-        headerTintColor: '#fff',
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
+        headerShown: false,
       }}
     >
       <Tab.Screen 
         name="Home" 
         component={HomeScreen}
+        initialParams={{ user }}
         options={{
           tabBarLabel: 'Inicio',
           tabBarIcon: ({ color, size }) => (
@@ -48,6 +46,7 @@ const MainTabs = () => {
       <Tab.Screen 
         name="Clientes" 
         component={ClientesScreen}
+        initialParams={{ user }}
         options={{
           tabBarLabel: 'Clientes',
           tabBarIcon: ({ color, size }) => (
@@ -58,6 +57,7 @@ const MainTabs = () => {
       <Tab.Screen 
         name="Promociones" 
         component={PromocionesScreen}
+        initialParams={{ user }}
         options={{
           tabBarLabel: 'Promociones',
           tabBarIcon: ({ color, size }) => (
@@ -68,16 +68,18 @@ const MainTabs = () => {
       <Tab.Screen 
         name="Reportes" 
         component={ReportesScreen}
+        initialParams={{ user }}
         options={{
           tabBarLabel: 'Reportes',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart" size={size} color={color} />
+            <Ionicons name="stats-chart" size={size} color={color} />
           ),
         }}
       />
       <Tab.Screen 
         name="Alertas" 
         component={AlertasScreen}
+        initialParams={{ user }}
         options={{
           tabBarLabel: 'Alertas',
           tabBarIcon: ({ color, size }) => (
@@ -88,10 +90,22 @@ const MainTabs = () => {
       <Tab.Screen 
         name="Gastos" 
         component={GastosScreen}
+        initialParams={{ user }}
         options={{
           tabBarLabel: 'Gastos',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cash" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen 
+        name="Trabajadores" 
+        component={TrabajadoresScreen}
+        initialParams={{ user }}
+        options={{
+          tabBarLabel: 'Trabajadores',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people" size={size} color={color} />
           ),
         }}
       />
