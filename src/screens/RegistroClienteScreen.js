@@ -85,24 +85,18 @@ const RegistroClienteScreen = ({ route }) => {
     }
 
     if (result) {
-      Alert.alert('Éxito', isEdit ? 'Cliente actualizado correctamente' : 'Cliente registrado correctamente', [
-        {
-          text: 'OK',
-          onPress: () => {
-            setFormData({
-              nombre: '',
-              fecha_nacimiento: '',
-              celular: '',
-              fecha_inscripcion: '',
-              fecha_finalizacion: '',
-              tipo_inscripcion: '',
-              costo: '',
-            });
-            setFechaHoy();
-            navigation.goBack();
-          },
-        },
-      ]);
+      Alert.alert('Éxito', isEdit ? 'Cliente actualizado correctamente' : 'Cliente registrado correctamente');
+      setFormData({
+        nombre: '',
+        fecha_nacimiento: '',
+        celular: '',
+        fecha_inscripcion: '',
+        fecha_finalizacion: '',
+        tipo_inscripcion: '',
+        costo: '',
+      });
+      setFechaHoy();
+      navigation.goBack();
     } else {
       Alert.alert('Error', isEdit ? 'No se pudo actualizar el cliente' : 'No se pudo registrar el cliente');
     }

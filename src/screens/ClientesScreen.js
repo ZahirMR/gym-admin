@@ -26,6 +26,7 @@ const ClientesScreen = ({ navigation }) => {
           onPress: async () => {
             await deleteCliente(id);
             loadClientes();
+            Alert.alert('Éxito', 'Cliente eliminado correctamente');
           },
         },
       ]
