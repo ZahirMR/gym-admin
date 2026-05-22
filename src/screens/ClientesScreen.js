@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image, Modal } from 'react-native';
 import { getClientes, deleteCliente, getClienteById } from '../database/database';
 
 const ClientesScreen = ({ navigation }) => {
   const [clientes, setClientes] = useState([]);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [clienteToDelete, setClienteToDelete] = useState(null);
 
   useEffect(() => {
     loadClientes();
@@ -16,28 +18,40 @@ const ClientesScreen = ({ navigation }) => {
 
   const handleDelete = (id, nombre) => {
     console.log('Botón eliminar presionado para:', nombre, 'ID:', id);
-    Alert.alert(
-      'Eliminar Cliente',
-      `¿Estás seguro de eliminar a ${nombre}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            console.log('Confirmado eliminar cliente con ID:', id);
-            const result = await deleteCliente(id);
-            console.log('Resultado de eliminación:', result);
-            if (result) {
-              loadClientes();
-              Alert.alert('Éxito', 'Cliente eliminado correctamente');
-            } else {
-              Alert.alert('Error', 'No se pudo eliminar el cliente');
-            }
-          },
-        },
-      ]
-    );
+    if (!id) {
+      console.error('ID del cliente es undefined');
+      alert('Error: ID del cliente no válido');
+      return;
+    }
+    
+    setClienteToDelete({ id, nombre });
+    setDeleteModalVisible(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!clienteToDelete) return;
+    
+    console.log('Confirmado eliminar cliente con ID:', clienteToDelete.id);
+    try {
+      const result = await deleteCliente(clienteToDelete.id);
+      console.log('Resultado de eliminación:', result);
+      if (result) {
+        loadClientes();
+        alert('Cliente eliminado correctamente');
+      } else {
+        alert('No se pudo eliminar el cliente');
+      }
+    } catch (error) {
+      console.error('Error al eliminar cliente:', error);
+      alert('Ocurrió un error al eliminar el cliente');
+    }
+    setDeleteModalVisible(false);
+    setClienteToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setDeleteModalVisible(false);
+    setClienteToDelete(null);
   };
 
   const handleEdit = async (id) => {
@@ -100,6 +114,36 @@ const ClientesScreen = ({ navigation }) => {
           </View>
         }
       />
+
+      <Modal
+        visible={deleteModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={cancelDelete}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <Text style={styles.modalTitle}>Eliminar Cliente</Text>
+            <Text style={styles.modalMessage}>
+              ¿Estás seguro de eliminar a {clienteToDelete?.nombre}?
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={cancelDelete}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonDelete]}
+                onPress={confirmDelete}
+              >
+                <Text style={styles.modalButtonText}>Eliminar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -186,6 +230,57 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#888',
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#16213e',
+    borderRadius: 15,
+    padding: 20,
+    width: '80%',
+    maxWidth: 400,
+    borderWidth: 2,
+    borderColor: '#e94560',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: '#4ade80',
+  },
+  modalButtonDelete: {
+    backgroundColor: '#ef4444',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
