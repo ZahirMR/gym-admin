@@ -15,6 +15,7 @@ const ClientesScreen = ({ navigation }) => {
   };
 
   const handleDelete = (id, nombre) => {
+    console.log('Botón eliminar presionado para:', nombre, 'ID:', id);
     Alert.alert(
       'Eliminar Cliente',
       `¿Estás seguro de eliminar a ${nombre}?`,
@@ -24,7 +25,7 @@ const ClientesScreen = ({ navigation }) => {
           text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
-            console.log('Eliminando cliente con ID:', id);
+            console.log('Confirmado eliminar cliente con ID:', id);
             const result = await deleteCliente(id);
             console.log('Resultado de eliminación:', result);
             if (result) {
