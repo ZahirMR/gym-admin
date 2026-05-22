@@ -262,9 +262,8 @@ export const deleteCliente = async (id) => {
     // Eliminar pagos asociados
     const pagosQuery = query(collection(db, 'pagos'), where('cliente_id', '==', id));
     const pagosSnapshot = await getDocs(pagosQuery);
-    pagosSnapshot.forEach(async (doc) => {
-      await deleteDoc(doc.ref);
-    });
+    const deletePromises = pagosSnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
 
     // Eliminar cliente
     await deleteDoc(doc(db, 'clientes', id));
