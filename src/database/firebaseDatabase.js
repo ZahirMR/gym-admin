@@ -259,14 +259,20 @@ export const updateCliente = async (id, cliente) => {
 
 export const deleteCliente = async (id) => {
   try {
+    console.log('Iniciando eliminación de cliente con ID:', id);
+    
     // Eliminar pagos asociados
     const pagosQuery = query(collection(db, 'pagos'), where('cliente_id', '==', id));
     const pagosSnapshot = await getDocs(pagosQuery);
+    console.log('Pagos encontrados:', pagosSnapshot.docs.length);
+    
     const deletePromises = pagosSnapshot.docs.map(doc => deleteDoc(doc.ref));
     await Promise.all(deletePromises);
+    console.log('Pagos eliminados');
 
     // Eliminar cliente
     await deleteDoc(doc(db, 'clientes', id));
+    console.log('Cliente eliminado');
     return true;
   } catch (error) {
     console.error('Error al eliminar cliente:', error);

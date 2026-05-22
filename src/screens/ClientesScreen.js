@@ -24,9 +24,15 @@ const ClientesScreen = ({ navigation }) => {
           text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
-            await deleteCliente(id);
-            loadClientes();
-            Alert.alert('Éxito', 'Cliente eliminado correctamente');
+            console.log('Eliminando cliente con ID:', id);
+            const result = await deleteCliente(id);
+            console.log('Resultado de eliminación:', result);
+            if (result) {
+              loadClientes();
+              Alert.alert('Éxito', 'Cliente eliminado correctamente');
+            } else {
+              Alert.alert('Error', 'No se pudo eliminar el cliente');
+            }
           },
         },
       ]
