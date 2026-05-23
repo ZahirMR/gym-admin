@@ -204,23 +204,48 @@ export const getClientes = async () => {
     const snapshot = await getDocs(q);
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Calcular estado de clientes según fecha de vencimiento (sin actualizar en DB)
+    // Actualizar estado de clientes según fecha de vencimiento
+    const updates = [];
     for (const cliente of clientes) {
       if (cliente.fecha_finalizacion) {
-        // Convertir fecha de DD/MM/YY a Date
-        const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
-        const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        let fechaFin;
+        
+        // Detectar formato de fecha y parsear correctamente
+        if (cliente.fecha_finalizacion.includes('-')) {
+          // Formato YYYY-MM-DD
+          const [anio, mes, dia] = cliente.fecha_finalizacion.split('-');
+          fechaFin = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        } else if (cliente.fecha_finalizacion.includes('/')) {
+          // Formato DD/MM/YY
+          const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
+          fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        } else {
+          continue;
+        }
+        
         fechaFin.setHours(0, 0, 0, 0);
         
-        // Si está activo pero venció, marcar como expirado en memoria
+        // Validar que la fecha sea válida
+        if (isNaN(fechaFin.getTime())) {
+          continue;
+        }
+        
+        // Si está activo pero venció, cambiar a expirado
         if (cliente.estado === 'activo' && fechaFin < hoy) {
+          updates.push(updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' }));
           cliente.estado = 'expirado';
         }
-        // Si está expirado pero no venció, marcar como activo en memoria
+        // Si está expirado pero no venció, cambiar a activo
         else if (cliente.estado === 'expirado' && fechaFin >= hoy) {
+          updates.push(updateDoc(doc(db, 'clientes', cliente.id), { estado: 'activo' }));
           cliente.estado = 'activo';
         }
       }
+    }
+    
+    // Ejecutar todas las actualizaciones en paralelo
+    if (updates.length > 0) {
+      await Promise.all(updates);
     }
     
     return clientes;
