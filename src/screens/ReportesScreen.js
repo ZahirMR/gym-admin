@@ -23,7 +23,12 @@ const ReportesScreen = ({ route }) => {
     const mensual = await getIngresosPorMes();
     const gastos = await getTotalGastos();
     
-    const socio = total * 0.10; // 10% para socio
+    // Calcular 10% solo para inscripciones mensuales (100Bs, 150Bs), no para sesiones de 10Bs
+    const pagosMensuales = pagosData.filter(pago => 
+      pago.tipo_pago && !pago.tipo_pago.toLowerCase().includes('sesión') && pago.monto >= 100
+    );
+    const totalMensual = pagosMensuales.reduce((sum, pago) => sum + pago.monto, 0);
+    const socio = totalMensual * 0.10; // 10% solo para inscripciones mensuales
     const ganancia = total - socio - gastos; // Ganancia neta
     
     setPagos(pagosData);

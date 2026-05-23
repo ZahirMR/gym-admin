@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image, Modal } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { getClientes, deleteCliente, getClienteById } from '../database/database';
 
 const ClientesScreen = ({ navigation }) => {
@@ -7,9 +8,11 @@ const ClientesScreen = ({ navigation }) => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [clienteToDelete, setClienteToDelete] = useState(null);
 
-  useEffect(() => {
-    loadClientes();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadClientes();
+    }, [])
+  );
 
   const loadClientes = async () => {
     const data = await getClientes();

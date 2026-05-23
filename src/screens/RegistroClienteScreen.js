@@ -38,10 +38,14 @@ const RegistroClienteScreen = ({ route }) => {
   };
 
   const setFechaHoy = () => {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = new Date();
+    // Ajustar a zona horaria local
+    const offset = hoy.getTimezoneOffset();
+    const localDate = new Date(hoy.getTime() - (offset * 60 * 1000));
+    const fechaStr = localDate.toISOString().split('T')[0];
     setFormData(prev => ({
       ...prev,
-      fecha_inscripcion: hoy,
+      fecha_inscripcion: fechaStr,
     }));
   };
 
@@ -57,13 +61,17 @@ const RegistroClienteScreen = ({ route }) => {
 
   const calcularFechaFinalizacion = (duracion) => {
     const fecha = new Date();
+    // Ajustar a zona horaria local
+    const offset = fecha.getTimezoneOffset();
+    const localDate = new Date(fecha.getTime() - (offset * 60 * 1000));
+    
     if (duracion.includes('mes')) {
       const meses = parseInt(duracion) || 1;
-      fecha.setMonth(fecha.getMonth() + meses);
+      localDate.setMonth(localDate.getMonth() + meses);
     } else if (duracion.includes('sesión')) {
-      fecha.setDate(fecha.getDate() + 1);
+      // Para sesiones, la fecha de finalización es el mismo día (no suma días)
     }
-    return fecha.toISOString().split('T')[0];
+    return localDate.toISOString().split('T')[0];
   };
 
   const handleSave = async () => {
@@ -72,9 +80,23 @@ const RegistroClienteScreen = ({ route }) => {
       return;
     }
 
+    // Verificar si la fecha de finalización ya es pasada y marcar como expirado
+    let estado = 'activo';
+    if (formData.fecha_finalizacion) {
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const fechaFin = new Date(formData.fecha_finalizacion);
+      fechaFin.setHours(0, 0, 0, 0);
+      
+      if (fechaFin < hoy) {
+        estado = 'expirado';
+      }
+    }
+
     const clienteData = {
       ...formData,
       costo: parseFloat(formData.costo),
+      estado: estado,
     };
 
     let result;

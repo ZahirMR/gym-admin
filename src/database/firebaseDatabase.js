@@ -204,7 +204,7 @@ export const getClientes = async () => {
     const snapshot = await getDocs(q);
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Actualizar estado de clientes según fecha de vencimiento
+    // Calcular estado de clientes según fecha de vencimiento (sin actualizar en DB)
     for (const cliente of clientes) {
       if (cliente.fecha_finalizacion) {
         // Convertir fecha de DD/MM/YY a Date
@@ -212,14 +212,12 @@ export const getClientes = async () => {
         const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
         fechaFin.setHours(0, 0, 0, 0);
         
-        // Si está activo pero venció, cambiar a expirado
+        // Si está activo pero venció, marcar como expirado en memoria
         if (cliente.estado === 'activo' && fechaFin < hoy) {
-          await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' });
           cliente.estado = 'expirado';
         }
-        // Si está expirado pero no venció, cambiar a activo
+        // Si está expirado pero no venció, marcar como activo en memoria
         else if (cliente.estado === 'expirado' && fechaFin >= hoy) {
-          await updateDoc(doc(db, 'clientes', cliente.id), { estado: 'activo' });
           cliente.estado = 'activo';
         }
       }
@@ -333,12 +331,18 @@ export const getPagos = async () => {
     const snapshot = await getDocs(q);
     const pagos = [];
     
-    for (const doc of snapshot.docs) {
-      const pagoData = doc.data();
-      const clienteDoc = await getDoc(doc(db, 'clientes', pagoData.cliente_id));
-      const clienteNombre = clienteDoc.exists() ? clienteDoc.data().nombre : 'Desconocido';
+    // Obtener todos los clientes en una sola query
+    const clientesSnapshot = await getDocs(collection(db, 'clientes'));
+    const clientesMap = {};
+    clientesSnapshot.forEach(doc => {
+      clientesMap[doc.id] = doc.data().nombre;
+    });
+    
+    for (const docSnapshot of snapshot.docs) {
+      const pagoData = docSnapshot.data();
+      const clienteNombre = clientesMap[pagoData.cliente_id] || 'Desconocido';
       pagos.push({
-        id: doc.id,
+        id: docSnapshot.id,
         ...pagoData,
         cliente_nombre: clienteNombre
       });
@@ -359,19 +363,16 @@ export const getClientesPorVencer = async () => {
     en5Dias.setDate(en5Dias.getDate() + 5);
     en5Dias.setHours(0, 0, 0, 0);
 
-    const q = query(
-      collection(db, 'clientes'),
-      where('estado', '==', 'activo'),
-      orderBy('fecha_finalizacion', 'asc')
-    );
+    // Simplificar query para no requerir índice compuesto
+    const q = query(collection(db, 'clientes'), orderBy('fecha_finalizacion', 'asc'));
     
     const snapshot = await getDocs(q);
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Filtrar clientes que vencen en 5 días
+    // Filtrar clientes activos que vencen en 5 días
     const clientesPorVencer = [];
     for (const cliente of clientes) {
-      if (cliente.fecha_finalizacion) {
+      if (cliente.estado === 'activo' && cliente.fecha_finalizacion) {
         const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
         const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
         fechaFin.setHours(0, 0, 0, 0);

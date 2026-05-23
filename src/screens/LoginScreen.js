@@ -1,10 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loginAdmin } from '../database/database';
 
 const LoginScreen = ({ navigation }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const checkSession = async () => {
+    try {
+      const userJson = await AsyncStorage.getItem('user');
+      if (userJson) {
+        const user = JSON.parse(userJson);
+        navigation.replace('MainTabs', { user });
+      }
+    } catch (error) {
+      console.error('Error al verificar sesión:', error);
+    }
+  };
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -14,6 +31,11 @@ const LoginScreen = ({ navigation }) => {
 
     const admin = await loginAdmin(username, password);
     if (admin) {
+      try {
+        await AsyncStorage.setItem('user', JSON.stringify(admin));
+      } catch (error) {
+        console.error('Error al guardar sesión:', error);
+      }
       navigation.replace('MainTabs', { user: admin });
     } else {
       Alert.alert('Error', 'Usuario o contraseña incorrectos');

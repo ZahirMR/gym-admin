@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import LoginScreen from '../screens/LoginScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -120,8 +121,13 @@ const MainTabs = ({ route, navigation }) => {
         name="Logout"
         component={() => null}
         listeners={({ navigation }) => ({
-          tabPress: (e) => {
+          tabPress: async (e) => {
             e.preventDefault();
+            try {
+              await AsyncStorage.removeItem('user');
+            } catch (error) {
+              console.error('Error al cerrar sesión:', error);
+            }
             navigation.reset({
               index: 0,
               routes: [{ name: 'Login' }],
