@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { getClientes, getPromociones, getTotalIngresos, getClientesPorVencer } from '../database/database';
 
 const HomeScreen = ({ navigation }) => {
@@ -10,9 +11,11 @@ const HomeScreen = ({ navigation }) => {
     clientesPorVencer: 0,
   });
 
-  useEffect(() => {
-    loadStats();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadStats();
+    }, [])
+  );
 
   const loadStats = async () => {
     const clientes = await getClientes();

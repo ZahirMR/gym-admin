@@ -398,9 +398,26 @@ export const getClientesPorVencer = async () => {
     const clientesPorVencer = [];
     for (const cliente of clientes) {
       if (cliente.estado === 'activo' && cliente.fecha_finalizacion) {
-        const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
-        const fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        let fechaFin;
+        
+        // Detectar formato de fecha y parsear correctamente
+        if (cliente.fecha_finalizacion.includes('-')) {
+          // Formato YYYY-MM-DD
+          const [anio, mes, dia] = cliente.fecha_finalizacion.split('-');
+          fechaFin = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        } else if (cliente.fecha_finalizacion.includes('/')) {
+          // Formato DD/MM/YY
+          const [dia, mes, anio] = cliente.fecha_finalizacion.split('/');
+          fechaFin = new Date(2000 + parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+        } else {
+          continue;
+        }
+        
         fechaFin.setHours(0, 0, 0, 0);
+        
+        if (isNaN(fechaFin.getTime())) {
+          continue;
+        }
         
         if (fechaFin >= hoy && fechaFin <= en5Dias) {
           clientesPorVencer.push(cliente);

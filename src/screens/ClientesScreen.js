@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image, Modal } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Image, Modal, TextInput } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { getClientes, deleteCliente, getClienteById } from '../database/database';
 
 const ClientesScreen = ({ navigation }) => {
   const [clientes, setClientes] = useState([]);
+  const [filteredClientes, setFilteredClientes] = useState([]);
+  const [searchText, setSearchText] = useState('');
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [clienteToDelete, setClienteToDelete] = useState(null);
 
@@ -17,6 +19,19 @@ const ClientesScreen = ({ navigation }) => {
   const loadClientes = async () => {
     const data = await getClientes();
     setClientes(data);
+    setFilteredClientes(data);
+  };
+
+  const handleSearch = (text) => {
+    setSearchText(text);
+    if (text === '') {
+      setFilteredClientes(clientes);
+    } else {
+      const filtered = clientes.filter(cliente =>
+        cliente.nombre.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredClientes(filtered);
+    }
   };
 
   const handleDelete = (id, nombre) => {
@@ -39,7 +54,12 @@ const ClientesScreen = ({ navigation }) => {
       const result = await deleteCliente(clienteToDelete.id);
       console.log('Resultado de eliminación:', result);
       if (result) {
-        loadClientes();
+        // Actualizar estado localmente inmediatamente
+        const updatedClientes = clientes.filter(c => c.id !== clienteToDelete.id);
+        setClientes(updatedClientes);
+        setFilteredClientes(updatedClientes.filter(c => 
+          c.nombre.toLowerCase().includes(searchText.toLowerCase())
+        ));
         alert('Cliente eliminado correctamente');
       } else {
         alert('No se pudo eliminar el cliente');
@@ -106,14 +126,26 @@ const ClientesScreen = ({ navigation }) => {
         <Text style={styles.addButtonText}>+ Nuevo Cliente</Text>
       </TouchableOpacity>
 
+      <View style={styles.searchContainer}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar por nombre..."
+          placeholderTextColor="#888"
+          value={searchText}
+          onChangeText={handleSearch}
+        />
+      </View>
+
       <FlatList
-        data={clientes}
+        data={filteredClientes}
         renderItem={renderCliente}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay clientes registrados</Text>
+            <Text style={styles.emptyText}>
+              {searchText ? 'No se encontraron clientes' : 'No hay clientes registrados'}
+            </Text>
           </View>
         }
       />
@@ -168,8 +200,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
+  searchContainer: {
+    paddingHorizontal: 15,
+    marginBottom: 10,
+  },
+  searchInput: {
+    backgroundColor: '#16213e',
+    color: '#fff',
+    padding: 12,
+    borderRadius: 10,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#e94560',
+  },
   listContent: {
-    padding: 15,
+    paddingHorizontal: 15,
   },
   clienteCard: {
     backgroundColor: '#16213e',
