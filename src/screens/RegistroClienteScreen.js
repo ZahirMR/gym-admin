@@ -12,6 +12,8 @@ const RegistroClienteScreen = ({ route }) => {
     fecha_finalizacion: '',
     tipo_inscripcion: '',
     costo: '',
+    estado_pago: 'pago', // 'pago', 'no pago', 'debe'
+    monto_pendiente: '',
   });
   const [promociones, setPromociones] = useState([]);
 
@@ -26,6 +28,8 @@ const RegistroClienteScreen = ({ route }) => {
         fecha_finalizacion: cliente.fecha_finalizacion,
         tipo_inscripcion: cliente.tipo_inscripcion,
         costo: cliente.costo.toString(),
+        estado_pago: cliente.estado_pago || 'pago',
+        monto_pendiente: cliente.monto_pendiente ? cliente.monto_pendiente.toString() : '',
       });
     } else {
       setFechaHoy();
@@ -97,6 +101,7 @@ const RegistroClienteScreen = ({ route }) => {
       ...formData,
       costo: parseFloat(formData.costo),
       estado: estado,
+      monto_pendiente: formData.estado_pago === 'debe' ? parseFloat(formData.monto_pendiente) : 0,
     };
 
     let result;
@@ -116,6 +121,8 @@ const RegistroClienteScreen = ({ route }) => {
         fecha_finalizacion: '',
         tipo_inscripcion: '',
         costo: '',
+        estado_pago: 'pago',
+        monto_pendiente: '',
       });
       setFechaHoy();
       navigation.goBack();
@@ -212,6 +219,41 @@ const RegistroClienteScreen = ({ route }) => {
           keyboardType="decimal-pad"
         />
 
+        <Text style={styles.label}>Estado de Pago</Text>
+        <View style={styles.pickerContainer}>
+          {['pago', 'no pago', 'debe'].map((opcion) => (
+            <TouchableOpacity
+              key={opcion}
+              style={[
+                styles.pickerOption,
+                formData.estado_pago === opcion && styles.pickerOptionSelected,
+              ]}
+              onPress={() => setFormData({ ...formData, estado_pago: opcion })}
+            >
+              <Text style={[
+                styles.pickerOptionText,
+                formData.estado_pago === opcion && styles.pickerOptionTextSelected,
+              ]}>
+                {opcion.charAt(0).toUpperCase() + opcion.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {formData.estado_pago === 'debe' && (
+          <>
+            <Text style={styles.label}>Monto Pendiente (Bs)</Text>
+            <TextInput
+              style={styles.input}
+              value={formData.monto_pendiente}
+              onChangeText={(text) => setFormData({ ...formData, monto_pendiente: text })}
+              placeholder="Monto que falta pagar"
+              placeholderTextColor="#888"
+              keyboardType="decimal-pad"
+            />
+          </>
+        )}
+
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveButtonText}>Guardar Cliente</Text>
         </TouchableOpacity>
@@ -248,6 +290,33 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     fontSize: 16,
+  },
+  pickerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 5,
+  },
+  pickerOption: {
+    flex: 1,
+    backgroundColor: '#16213e',
+    padding: 12,
+    borderRadius: 8,
+    marginHorizontal: 3,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333',
+  },
+  pickerOptionSelected: {
+    backgroundColor: '#e94560',
+    borderColor: '#e94560',
+  },
+  pickerOptionText: {
+    color: '#888',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  pickerOptionTextSelected: {
+    color: '#fff',
   },
   promocionesList: {
     flexDirection: 'row',

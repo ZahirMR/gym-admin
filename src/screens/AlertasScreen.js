@@ -1,42 +1,87 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { getClientesPorVencer, getClientesVencidos, updateCliente } from '../database/database';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, TextInput } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { getClientesPorVencer, getClientesVencidos, updateCliente, getPromociones } from '../database/database';
 
 const AlertasScreen = () => {
   const [porVencer, setPorVencer] = useState([]);
   const [vencidos, setVencidos] = useState([]);
+  const [renovarModalVisible, setRenovarModalVisible] = useState(false);
+  const [clienteRenovar, setClienteRenovar] = useState(null);
+  const [mesesAgregar, setMesesAgregar] = useState('1');
+  const [promociones, setPromociones] = useState([]);
+  const [promocionSeleccionada, setPromocionSeleccionada] = useState(null);
 
-  useEffect(() => {
-    loadAlertas();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadAlertas();
+    }, [])
+  );
 
   const loadAlertas = async () => {
     const vencer = await getClientesPorVencer();
     const vencido = await getClientesVencidos();
+    const promos = await getPromociones();
     setPorVencer(vencer);
     setVencidos(vencido);
+    setPromociones(promos);
   };
 
   const handleRenovar = async (cliente) => {
-    Alert.alert(
-      'Renovar Membresía',
-      `¿Deseas renovar la membresía de ${cliente.nombre}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Renovar',
-          onPress: async () => {
-            const fechaFin = new Date();
-            fechaFin.setMonth(fechaFin.getMonth() + 1);
-            await updateCliente(cliente.id, {
-              ...cliente,
-              fecha_finalizacion: fechaFin.toISOString().split('T')[0],
-            });
-            loadAlertas();
-          },
-        },
-      ]
-    );
+    setClienteRenovar(cliente);
+    setMesesAgregar('1');
+    setPromocionSeleccionada(null);
+    setRenovarModalVisible(true);
+  };
+
+  const confirmarRenovacion = async () => {
+    if (!clienteRenovar) return;
+
+    try {
+      let fechaFin;
+      
+      if (clienteRenovar.estado === 'expirado') {
+        // Para expirados, reactivar desde hoy
+        fechaFin = new Date();
+      } else {
+        // Para activos, sumar al tiempo que le falta
+        const [anio, mes, dia] = clienteRenovar.fecha_finalizacion.split('-');
+        fechaFin = new Date(parseInt(anio), parseInt(mes) - 1, parseInt(dia));
+      }
+      
+      if (promocionSeleccionada) {
+        // Usar duración de la promoción seleccionada
+        const duracion = parseInt(promocionSeleccionada.duracion);
+        fechaFin.setMonth(fechaFin.getMonth() + duracion);
+      } else {
+        // Usar meses a agregar
+        const meses = parseInt(mesesAgregar) || 1;
+        fechaFin.setMonth(fechaFin.getMonth() + meses);
+      }
+      
+      const nuevaFecha = fechaFin.toISOString().split('T')[0];
+      
+      const result = await updateCliente(clienteRenovar.id, {
+        ...clienteRenovar,
+        fecha_finalizacion: nuevaFecha,
+        estado: 'activo',
+        estado_pago: 'pago',
+        monto_pendiente: 0,
+        tipo_inscripcion: promocionSeleccionada ? promocionSeleccionada.nombre : clienteRenovar.tipo_inscripcion,
+        costo: promocionSeleccionada ? promocionSeleccionada.precio : clienteRenovar.costo,
+      });
+      
+      if (result) {
+        Alert.alert('Éxito', 'Membresía renovada correctamente');
+        setRenovarModalVisible(false);
+        loadAlertas();
+      } else {
+        Alert.alert('Error', 'No se pudo renovar la membresía');
+      }
+    } catch (error) {
+      console.error('Error al renovar:', error);
+      Alert.alert('Error', 'Ocurrió un error al renovar la membresía');
+    }
   };
 
   const handleDesactivar = async (cliente) => {
@@ -125,6 +170,68 @@ const AlertasScreen = () => {
           <Text style={styles.emptyText}>No hay membresías expiradas</Text>
         )}
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={renovarModalVisible}
+        onRequestClose={() => setRenovarModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Renovar Membresía</Text>
+            <Text style={styles.modalSubtitle}>
+              {clienteRenovar?.nombre} - {clienteRenovar?.estado === 'expirado' ? 'Reactivar' : 'Extender'}
+            </Text>
+
+            <Text style={styles.label}>Agregar Meses</Text>
+            <TextInput
+              style={styles.input}
+              value={mesesAgregar}
+              onChangeText={setMesesAgregar}
+              placeholder="Cantidad de meses"
+              placeholderTextColor="#888"
+              keyboardType="number-pad"
+            />
+
+            <Text style={styles.label}>O elegir Promoción</Text>
+            <ScrollView style={styles.promocionesList} horizontal>
+              {promociones.map((promocion) => (
+                <TouchableOpacity
+                  key={promocion.id}
+                  style={[
+                    styles.promocionCard,
+                    promocionSeleccionada?.id === promocion.id && styles.promocionCardSelected,
+                  ]}
+                  onPress={() => {
+                    setPromocionSeleccionada(promocion);
+                    setMesesAgregar('');
+                  }}
+                >
+                  <Text style={styles.promocionNombre}>{promocion.nombre}</Text>
+                  <Text style={styles.promocionPrecio}>{promocion.precio} Bs</Text>
+                  <Text style={styles.promocionDuracion}>{promocion.duracion} meses</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setRenovarModalVisible(false)}
+              >
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={confirmarRenovacion}
+              >
+                <Text style={styles.modalButtonText}>Confirmar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -222,6 +329,101 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     padding: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#1a1a2e',
+    padding: 20,
+    borderRadius: 15,
+    width: '90%',
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  modalSubtitle: {
+    color: '#888',
+    fontSize: 16,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  label: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 5,
+    marginTop: 15,
+  },
+  input: {
+    backgroundColor: '#16213e',
+    color: '#fff',
+    padding: 15,
+    borderRadius: 10,
+    fontSize: 16,
+  },
+  promocionesList: {
+    flexDirection: 'row',
+    marginBottom: 15,
+  },
+  promocionCard: {
+    backgroundColor: '#16213e',
+    padding: 15,
+    borderRadius: 10,
+    marginRight: 10,
+    minWidth: 120,
+    borderWidth: 2,
+    borderColor: '#333',
+  },
+  promocionCardSelected: {
+    borderColor: '#e94560',
+    backgroundColor: '#e94560',
+  },
+  promocionNombre: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  promocionPrecio: {
+    color: '#4ade80',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 3,
+  },
+  promocionDuracion: {
+    color: '#888',
+    fontSize: 12,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 20,
+  },
+  modalButton: {
+    flex: 1,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginHorizontal: 5,
+  },
+  cancelButton: {
+    backgroundColor: '#666',
+  },
+  confirmButton: {
+    backgroundColor: '#e94560',
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

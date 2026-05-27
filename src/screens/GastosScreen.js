@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, TextInput, Modal } from 'react-native';
-import { getGastos, insertGasto, updateGasto, deleteGasto } from '../database/database';
+import { useFocusEffect } from '@react-navigation/native';
+import { getGastos, insertGasto, updateGasto, deleteGasto, insertGanancia } from '../database/database';
 
 const GastosScreen = () => {
   const [gastos, setGastos] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalType, setModalType] = useState('gasto'); // 'gasto' o 'ganancia'
   const [editingGasto, setEditingGasto] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -13,9 +15,11 @@ const GastosScreen = () => {
     fecha: '',
   });
 
-  useEffect(() => {
-    loadGastos();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadGastos();
+    }, [])
+  );
 
   const loadGastos = async () => {
     const data = await getGastos();
@@ -24,6 +28,15 @@ const GastosScreen = () => {
 
   const handleAdd = () => {
     setEditingGasto(null);
+    setModalType('gasto');
+    const hoy = new Date().toISOString().split('T')[0];
+    setFormData({ nombre: '', monto: '', tipo: '', fecha: hoy });
+    setModalVisible(true);
+  };
+
+  const handleAddGanancia = () => {
+    setEditingGasto(null);
+    setModalType('ganancia');
     const hoy = new Date().toISOString().split('T')[0];
     setFormData({ nombre: '', monto: '', tipo: '', fecha: hoy });
     setModalVisible(true);
@@ -64,24 +77,28 @@ const GastosScreen = () => {
       return;
     }
 
-    const gasto = {
+    const data = {
       ...formData,
       monto: parseFloat(formData.monto),
     };
 
     let result;
-    if (editingGasto) {
-      result = await updateGasto(editingGasto.id, gasto);
+    if (modalType === 'ganancia') {
+      result = await insertGanancia(data);
     } else {
-      result = await insertGasto(gasto);
+      if (editingGasto) {
+        result = await updateGasto(editingGasto.id, data);
+      } else {
+        result = await insertGasto(data);
+      }
     }
 
     if (result) {
-      Alert.alert('Éxito', editingGasto ? 'Gasto actualizado' : 'Gasto creado');
+      Alert.alert('Éxito', modalType === 'ganancia' ? 'Ganancia registrada' : (editingGasto ? 'Gasto actualizado' : 'Gasto creado'));
       setModalVisible(false);
       loadGastos();
     } else {
-      Alert.alert('Error', 'No se pudo guardar el gasto');
+      Alert.alert('Error', 'No se pudo guardar');
     }
   };
 
@@ -112,9 +129,14 @@ const GastosScreen = () => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.addButton} onPress={handleAdd}>
-        <Text style={styles.addButtonText}>+ Nuevo Gasto</Text>
-      </TouchableOpacity>
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={[styles.addButton, styles.gastoButton]} onPress={handleAdd}>
+          <Text style={styles.addButtonText}>+ Nuevo Gasto</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.addButton, styles.gananciaButton]} onPress={handleAddGanancia}>
+          <Text style={styles.addButtonText}>+ Nueva Ganancia</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={gastos}
@@ -204,16 +226,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a2e',
   },
   addButton: {
-    backgroundColor: '#e94560',
     padding: 15,
-    margin: 15,
     borderRadius: 10,
     alignItems: 'center',
+    flex: 1,
+  },
+  gastoButton: {
+    backgroundColor: '#e94560',
+    marginRight: 5,
+  },
+  gananciaButton: {
+    backgroundColor: '#4ade80',
+    marginLeft: 5,
   },
   addButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    marginBottom: 15,
   },
   listContent: {
     padding: 15,

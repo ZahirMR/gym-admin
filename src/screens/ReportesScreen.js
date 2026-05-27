@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { getPagos, getTotalIngresos, getIngresosPorMes, getTotalGastos } from '../database/database';
+import { useFocusEffect } from '@react-navigation/native';
+import { getPagos, getTotalIngresos, getIngresosPorMes, getTotalGastos, getTotalGanancias } from '../database/database';
 
 const ReportesScreen = ({ route }) => {
   const { user } = route.params || {};
-  const isAdmin = user?.rol === 'admin' || !user?.rol;
+  const isAdmin = true; // Siempre mostrar reportes para admin
   
   const [pagos, setPagos] = useState([]);
   const [totalIngresos, setTotalIngresos] = useState(0);
@@ -13,30 +14,55 @@ const ReportesScreen = ({ route }) => {
   const [porcentajeSocio, setPorcentajeSocio] = useState(0);
   const [gananciaNeta, setGananciaNeta] = useState(0);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [])
+  );
 
   const loadData = async () => {
-    const pagosData = await getPagos();
-    const total = await getTotalIngresos();
-    const mensual = await getIngresosPorMes();
-    const gastos = await getTotalGastos();
-    
-    // Calcular 10% solo para inscripciones mensuales (100Bs, 150Bs), no para sesiones de 10Bs
-    const pagosMensuales = pagosData.filter(pago => 
-      pago.tipo_pago && !pago.tipo_pago.toLowerCase().includes('sesión') && pago.monto >= 100
-    );
-    const totalMensual = pagosMensuales.reduce((sum, pago) => sum + pago.monto, 0);
-    const socio = totalMensual * 0.10; // 10% solo para inscripciones mensuales
-    const ganancia = total - socio - gastos; // Ganancia neta
-    
-    setPagos(pagosData);
-    setTotalIngresos(total);
-    setIngresosPorMes(mensual);
-    setTotalGastos(gastos);
-    setPorcentajeSocio(socio);
-    setGananciaNeta(ganancia);
+    try {
+      console.log('Cargando datos de reportes...');
+      console.log('User:', user);
+      console.log('IsAdmin:', isAdmin);
+      
+      const pagosData = await getPagos();
+      console.log('Pagos:', pagosData.length);
+      
+      const total = await getTotalIngresos();
+      console.log('Total Ingresos:', total);
+      
+      const gananciasAdicionales = await getTotalGanancias();
+      console.log('Ganancias adicionales:', gananciasAdicionales);
+      
+      const totalConGanancias = total + gananciasAdicionales;
+      console.log('Total con ganancias:', totalConGanancias);
+      
+      const mensual = await getIngresosPorMes();
+      console.log('Ingresos por mes:', mensual.length);
+      
+      const gastos = await getTotalGastos();
+      console.log('Total Gastos:', gastos);
+      
+      // Calcular 10% solo para inscripciones mensuales (100Bs, 150Bs), no para sesiones de 10Bs
+      const pagosMensuales = pagosData.filter(pago => 
+        pago.tipo_pago && !pago.tipo_pago.toLowerCase().includes('sesión') && pago.monto >= 100
+      );
+      const totalMensual = pagosMensuales.reduce((sum, pago) => sum + pago.monto, 0);
+      const socio = totalMensual * 0.10; // 10% solo para inscripciones mensuales
+      const ganancia = totalConGanancias - socio - gastos; // Ganancia neta con ganancias adicionales
+      
+      setPagos(pagosData);
+      setTotalIngresos(totalConGanancias);
+      setIngresosPorMes(mensual);
+      setTotalGastos(gastos);
+      setPorcentajeSocio(socio);
+      setGananciaNeta(ganancia);
+      
+      console.log('Datos de reportes cargados correctamente');
+    } catch (error) {
+      console.error('Error al cargar datos de reportes:', error);
+    }
   };
 
   return (

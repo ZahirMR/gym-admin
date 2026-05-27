@@ -204,7 +204,7 @@ export const getClientes = async () => {
     const snapshot = await getDocs(q);
     const clientes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     
-    // Actualizar estado de clientes según fecha de vencimiento
+    // Actualizar estado de clientes según fecha de vencimiento y estado de pago
     const updates = [];
     for (const cliente of clientes) {
       if (cliente.fecha_finalizacion) {
@@ -230,15 +230,25 @@ export const getClientes = async () => {
           continue;
         }
         
-        // Si está activo pero venció, cambiar a expirado
-        if (cliente.estado === 'activo' && fechaFin < hoy) {
-          updates.push(updateDoc(doc(db, 'clientes', cliente.id), { estado: 'expirado' }));
-          cliente.estado = 'expirado';
+        // Determinar estado basado en fecha y estado de pago
+        let nuevoEstado = cliente.estado;
+        
+        // Si debe o no pagó, marcar como expirado
+        if (cliente.estado_pago === 'debe' || cliente.estado_pago === 'no pago') {
+          nuevoEstado = 'expirado';
+        } else if (cliente.estado_pago === 'pago') {
+          // Si pagó, verificar fecha
+          if (fechaFin < hoy) {
+            nuevoEstado = 'expirado';
+          } else {
+            nuevoEstado = 'activo';
+          }
         }
-        // Si está expirado pero no venció, cambiar a activo
-        else if (cliente.estado === 'expirado' && fechaFin >= hoy) {
-          updates.push(updateDoc(doc(db, 'clientes', cliente.id), { estado: 'activo' }));
-          cliente.estado = 'activo';
+        
+        // Actualizar si el estado cambió
+        if (cliente.estado !== nuevoEstado) {
+          updates.push(updateDoc(doc(db, 'clientes', cliente.id), { estado: nuevoEstado }));
+          cliente.estado = nuevoEstado;
         }
       }
     }
@@ -511,6 +521,40 @@ export const insertGasto = async (gasto) => {
   } catch (error) {
     console.error('Error al insertar gasto:', error);
     return null;
+  }
+};
+
+export const insertGanancia = async (ganancia) => {
+  try {
+    const docRef = await addDoc(collection(db, 'ganancias'), {
+      ...ganancia,
+      creado_en: new Date().toISOString()
+    });
+    return { insertId: docRef.id };
+  } catch (error) {
+    console.error('Error al insertar ganancia:', error);
+    return null;
+  }
+};
+
+export const getGanancias = async () => {
+  try {
+    const q = query(collection(db, 'ganancias'), orderBy('fecha', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error('Error al obtener ganancias:', error);
+    return [];
+  }
+};
+
+export const getTotalGanancias = async () => {
+  try {
+    const ganancias = await getGanancias();
+    return ganancias.reduce((sum, g) => sum + g.monto, 0);
+  } catch (error) {
+    console.error('Error al obtener total de ganancias:', error);
+    return 0;
   }
 };
 

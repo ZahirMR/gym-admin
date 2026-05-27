@@ -99,6 +99,17 @@ const ClientesScreen = ({ navigation }) => {
         ]}>
           Estado: {item.estado.toUpperCase()}
         </Text>
+        <Text style={[
+          styles.clienteEstadoPago,
+          { color: item.estado_pago === 'pago' ? '#4ade80' : '#f59e0b' }
+        ]}>
+          Pago: {item.estado_pago?.toUpperCase() || 'PAGO'}
+        </Text>
+        {item.estado_pago === 'debe' && item.monto_pendiente > 0 && (
+          <Text style={styles.clientePendiente}>
+            Pendiente: {item.monto_pendiente} Bs
+          </Text>
+        )}
       </View>
       <View style={styles.clienteActions}>
         <TouchableOpacity
@@ -242,6 +253,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     marginTop: 5,
+  },
+  clienteEstadoPago: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 3,
+  },
+  clientePendiente: {
+    color: '#f59e0b',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 3,
   },
   clienteActions: {
     flexDirection: 'column',
