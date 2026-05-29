@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPagos, getTotalIngresos, getIngresosPorMes, getTotalGastos, getTotalGanancias } from '../database/database';
 
 const ReportesScreen = ({ route }) => {
@@ -14,6 +15,7 @@ const ReportesScreen = ({ route }) => {
   const [porcentajeSocio, setPorcentajeSocio] = useState(0);
   const [gananciaNeta, setGananciaNeta] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [usingCache, setUsingCache] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -25,9 +27,32 @@ const ReportesScreen = ({ route }) => {
     try {
       setLoading(true);
       console.log('Cargando datos de reportes...');
-      console.log('User:', user);
-      console.log('IsAdmin:', isAdmin);
       
+      // Primero intentar cargar desde caché
+      try {
+        const cachedData = await AsyncStorage.getItem('reportesCache');
+        if (cachedData) {
+          const data = JSON.parse(cachedData);
+          const cacheAge = Date.now() - data.timestamp;
+          // Usar caché si tiene menos de 5 minutos
+          if (cacheAge < 300000) {
+            console.log('Usando datos del caché');
+            setPagos(data.pagos);
+            setTotalIngresos(data.totalIngresos);
+            setIngresosPorMes(data.ingresosPorMes);
+            setTotalGastos(data.totalGastos);
+            setPorcentajeSocio(data.porcentajeSocio);
+            setGananciaNeta(data.gananciaNeta);
+            setUsingCache(true);
+            setLoading(false);
+          }
+        }
+      } catch (cacheError) {
+        console.error('Error al leer caché:', cacheError);
+      }
+
+      // Cargar datos frescos de Firebase
+      console.log('Cargando datos frescos de Firebase...');
       const pagosData = await getPagos();
       console.log('Pagos:', pagosData.length);
       
@@ -60,6 +85,22 @@ const ReportesScreen = ({ route }) => {
       setTotalGastos(gastos);
       setPorcentajeSocio(socio);
       setGananciaNeta(ganancia);
+      setUsingCache(false);
+      
+      // Guardar en caché
+      try {
+        await AsyncStorage.setItem('reportesCache', JSON.stringify({
+          pagos: pagosData,
+          totalIngresos: totalConGanancias,
+          ingresosPorMes: mensual,
+          totalGastos: gastos,
+          porcentajeSocio: socio,
+          gananciaNeta: ganancia,
+          timestamp: Date.now()
+        }));
+      } catch (cacheError) {
+        console.error('Error al guardar caché:', cacheError);
+      }
       
       console.log('Datos de reportes cargados correctamente');
     } catch (error) {
