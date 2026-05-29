@@ -13,6 +13,7 @@ const ReportesScreen = ({ route }) => {
   const [totalGastos, setTotalGastos] = useState(0);
   const [porcentajeSocio, setPorcentajeSocio] = useState(0);
   const [gananciaNeta, setGananciaNeta] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -22,6 +23,7 @@ const ReportesScreen = ({ route }) => {
 
   const loadData = async () => {
     try {
+      setLoading(true);
       console.log('Cargando datos de reportes...');
       console.log('User:', user);
       console.log('IsAdmin:', isAdmin);
@@ -62,6 +64,8 @@ const ReportesScreen = ({ route }) => {
       console.log('Datos de reportes cargados correctamente');
     } catch (error) {
       console.error('Error al cargar datos de reportes:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,69 +75,77 @@ const ReportesScreen = ({ route }) => {
         <Text style={styles.title}>Reportes e Ingresos</Text>
       </View>
 
-      {isAdmin && (
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingText}>Cargando datos...</Text>
+        </View>
+      ) : (
         <>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Total de Ingresos</Text>
-            <Text style={styles.summaryAmount}>{totalIngresos.toFixed(2)} Bs</Text>
-          </View>
-
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>10% para Socio</Text>
-            <Text style={styles.summaryAmountWarning}>{porcentajeSocio.toFixed(2)} Bs</Text>
-          </View>
-
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Total de Gastos</Text>
-            <Text style={styles.summaryAmountDanger}>{totalGastos.toFixed(2)} Bs</Text>
-          </View>
-
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Ganancia Neta</Text>
-            <Text style={styles.summaryAmountSuccess}>{gananciaNeta.toFixed(2)} Bs</Text>
-          </View>
-        </>
-      )}
-
-      {isAdmin && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ingresos por Mes</Text>
-          {ingresosPorMes.map((item, index) => (
-            <View key={index} style={styles.monthCard}>
-              <Text style={styles.monthLabel}>{item.mes}</Text>
-              <Text style={styles.monthAmount}>{item.total.toFixed(2)} Bs</Text>
-            </View>
-          ))}
-          {ingresosPorMes.length === 0 && (
-            <Text style={styles.emptyText}>No hay datos de ingresos por mes</Text>
-          )}
-        </View>
-      )}
-
-      {!isAdmin && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ventas de Productos</Text>
-          <Text style={styles.emptyText}>No tienes acceso a información de ingresos</Text>
-        </View>
-      )}
-
-      {isAdmin && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Historial de Pagos</Text>
-          {pagos.map((pago) => (
-            <View key={pago.id} style={styles.pagoCard}>
-              <View style={styles.pagoInfo}>
-                <Text style={styles.pagoCliente}>{pago.cliente_nombre}</Text>
-                <Text style={styles.pagoTipo}>{pago.tipo_pago}</Text>
-                <Text style={styles.pagoFecha}>{pago.fecha_pago}</Text>
+          {isAdmin && (
+            <>
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>Total de Ingresos</Text>
+                <Text style={styles.summaryAmount}>{totalIngresos.toFixed(2)} Bs</Text>
               </View>
-              <Text style={styles.pagoMonto}>{pago.monto.toFixed(2)} Bs</Text>
-            </View>
-          ))}
-          {pagos.length === 0 && (
-            <Text style={styles.emptyText}>No hay pagos registrados</Text>
+
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>10% para Socio</Text>
+                <Text style={styles.summaryAmountWarning}>{porcentajeSocio.toFixed(2)} Bs</Text>
+              </View>
+
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>Total de Gastos</Text>
+                <Text style={styles.summaryAmountDanger}>{totalGastos.toFixed(2)} Bs</Text>
+              </View>
+
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>Ganancia Neta</Text>
+                <Text style={styles.summaryAmountSuccess}>{gananciaNeta.toFixed(2)} Bs</Text>
+              </View>
+            </>
           )}
-        </View>
+
+          {isAdmin && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ingresos por Mes</Text>
+              {ingresosPorMes.map((item, index) => (
+                <View key={index} style={styles.monthCard}>
+                  <Text style={styles.monthLabel}>{item.mes}</Text>
+                  <Text style={styles.monthAmount}>{item.total.toFixed(2)} Bs</Text>
+                </View>
+              ))}
+              {ingresosPorMes.length === 0 && (
+                <Text style={styles.emptyText}>No hay datos de ingresos por mes</Text>
+              )}
+            </View>
+          )}
+
+          {!isAdmin && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Ventas de Productos</Text>
+              <Text style={styles.emptyText}>No tienes acceso a información de ingresos</Text>
+            </View>
+          )}
+
+          {isAdmin && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Historial de Pagos</Text>
+              {pagos.map((pago) => (
+                <View key={pago.id} style={styles.pagoCard}>
+                  <View style={styles.pagoInfo}>
+                    <Text style={styles.pagoCliente}>{pago.cliente_nombre}</Text>
+                    <Text style={styles.pagoTipo}>{pago.tipo_pago}</Text>
+                    <Text style={styles.pagoFecha}>{pago.fecha_pago}</Text>
+                  </View>
+                  <Text style={styles.pagoMonto}>{pago.monto.toFixed(2)} Bs</Text>
+                </View>
+              ))}
+              {pagos.length === 0 && (
+                <Text style={styles.emptyText}>No hay pagos registrados</Text>
+              )}
+            </View>
+          )}
+        </>
       )}
     </ScrollView>
   );
@@ -253,6 +265,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     padding: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 50,
+  },
+  loadingText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
   },
 });
 

@@ -472,7 +472,14 @@ export const getClientesVencidos = async () => {
 
 export const getTotalIngresos = async () => {
   try {
-    const snapshot = await getDocs(collection(db, 'pagos'));
+    // Agregar timeout de 10 segundos
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), 10000)
+    );
+    
+    const snapshotPromise = getDocs(collection(db, 'pagos'));
+    const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
+    
     let total = 0;
     snapshot.forEach(doc => {
       total += doc.data().monto;
@@ -486,7 +493,14 @@ export const getTotalIngresos = async () => {
 
 export const getIngresosPorMes = async () => {
   try {
-    const snapshot = await getDocs(collection(db, 'pagos'));
+    // Agregar timeout de 10 segundos
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), 10000)
+    );
+    
+    const snapshotPromise = getDocs(collection(db, 'pagos'));
+    const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
+    
     const ingresosPorMes = {};
     
     snapshot.forEach(doc => {
@@ -550,7 +564,14 @@ export const getGanancias = async () => {
 
 export const getTotalGanancias = async () => {
   try {
-    const ganancias = await getGanancias();
+    // Agregar timeout de 10 segundos
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), 10000)
+    );
+    
+    const gananciasPromise = getGanancias();
+    const ganancias = await Promise.race([gananciasPromise, timeoutPromise]);
+    
     return ganancias.reduce((sum, g) => sum + g.monto, 0);
   } catch (error) {
     console.error('Error al obtener total de ganancias:', error);
@@ -592,7 +613,14 @@ export const deleteGasto = async (id) => {
 
 export const getTotalGastos = async () => {
   try {
-    const snapshot = await getDocs(collection(db, 'gastos'));
+    // Agregar timeout de 10 segundos
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Timeout')), 10000)
+    );
+    
+    const snapshotPromise = getDocs(collection(db, 'gastos'));
+    const snapshot = await Promise.race([snapshotPromise, timeoutPromise]);
+    
     let total = 0;
     snapshot.forEach(doc => {
       total += doc.data().monto;
